@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -118,7 +119,7 @@ func (p *Program[S]) Run(r io.Reader) (state *S, err error) {
 
 	scanner := bufio.NewScanner(r)
 
-	if len(p.rs) != 1 && p.rs[0] != '\n' {
+	if !slices.Equal(p.rs, []byte{'\n'}) {
 		scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 			if atEOF && len(data) > 0 {
 				advance, token = len(data), data
