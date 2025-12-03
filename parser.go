@@ -70,44 +70,21 @@ func (p *Program[S]) always(do func(*S, Match)) {
 	p.rules = append(p.rules, Rule[S]{fn: func(int, string) (bool, []string) { return true, nil }, do: do})
 }
 
-func (p *Program[S]) lt(lineNum int, do func(*S, Match)) {
-	p.rules = append(p.rules, Rule[S]{fn: func(idx int, line string) (matched bool, _ []string) {
-		matched = lineNum < idx
-		return
-	}, do: do})
+var nrOps = map[string]func(a, b int) bool{
+	"<":  func(a, b int) bool { return a < b },
+	"<=": func(a, b int) bool { return a <= b },
+	">":  func(a, b int) bool { return a > b },
+	">=": func(a, b int) bool { return a >= b },
+	"==": func(a, b int) bool { return a == b },
+	"!=": func(a, b int) bool { return a != b },
 }
 
-func (p *Program[S]) gt(lineNum int, do func(*S, Match)) {
+func (p *Program[S]) nr(op string, lineNum int, do func(*S, Match)) {
 	p.rules = append(p.rules, Rule[S]{fn: func(idx int, line string) (matched bool, _ []string) {
-		matched = lineNum > idx
-		return
-	}, do: do})
-}
-
-func (p *Program[S]) ge(lineNum int, do func(*S, Match)) {
-	p.rules = append(p.rules, Rule[S]{fn: func(idx int, line string) (matched bool, _ []string) {
-		matched = lineNum >= idx
-		return
-	}, do: do})
-}
-
-func (p *Program[S]) le(lineNum int, do func(*S, Match)) {
-	p.rules = append(p.rules, Rule[S]{fn: func(idx int, line string) (matched bool, _ []string) {
-		matched = lineNum <= idx
-		return
-	}, do: do})
-}
-
-func (p *Program[S]) ne(lineNum int, do func(*S, Match)) {
-	p.rules = append(p.rules, Rule[S]{fn: func(idx int, line string) (matched bool, _ []string) {
-		matched = lineNum != idx
-		return
-	}, do: do})
-}
-
-func (p *Program[S]) eq(lineNum int, do func(*S, Match)) {
-	p.rules = append(p.rules, Rule[S]{fn: func(idx int, line string) (matched bool, _ []string) {
-		matched = lineNum == idx
+		f, ok := nrOps[op]
+		if ok {
+			matched = f(lineNum, idx)
+		}
 		return
 	}, do: do})
 }
@@ -209,38 +186,8 @@ func Always[S any](do func(*S, Match)) Option[S] {
 	}
 }
 
-func Lt[S any](lineNum int, do func(*S, Match)) Option[S] {
+func NR[S any](op string, lineNum int, do func(*S, Match)) Option[S] {
 	return func(p *Program[S]) {
-		p.lt(lineNum, do)
-	}
-}
-
-func Le[S any](lineNum int, do func(*S, Match)) Option[S] {
-	return func(p *Program[S]) {
-		p.le(lineNum, do)
-	}
-}
-
-func Gt[S any](lineNum int, do func(*S, Match)) Option[S] {
-	return func(p *Program[S]) {
-		p.gt(lineNum, do)
-	}
-}
-
-func Ge[S any](lineNum int, do func(*S, Match)) Option[S] {
-	return func(p *Program[S]) {
-		p.ge(lineNum, do)
-	}
-}
-
-func Eq[S any](lineNum int, do func(*S, Match)) Option[S] {
-	return func(p *Program[S]) {
-		p.eq(lineNum, do)
-	}
-}
-
-func Ne[S any](lineNum int, do func(*S, Match)) Option[S] {
-	return func(p *Program[S]) {
-		p.ne(lineNum, do)
+		p.nr(op, lineNum, do)
 	}
 }
